@@ -10,6 +10,7 @@ jobs:
     env:
       qt_path: "${{ github.workspace }}/qt-msvc-arm64"
       qt_version: "6.9.0"
+      llvm_version: "20.1.0"
 
     steps:
       - name: Checkout repository
@@ -35,7 +36,8 @@ jobs:
         run: |
           # clear buildtrees after each package installation to reduce disk space requirements
           $packages = `
-            "openssl:x64-windows-release"
+            "openssl:x64-windows-release",
+            "protobuf:x64-windows-release"
           ${{ env.RUNVCPKG_VCPKG_ROOT }}/vcpkg.exe upgrade `
             --no-dry-run
           ${{ env.RUNVCPKG_VCPKG_ROOT }}/vcpkg.exe install `
@@ -44,13 +46,22 @@ jobs:
 
       - name: Build Qt
         run: |
-          git clone https://github.com/qt/qt5.git qt6
-          cd qt6
-          git checkout "v${{ env.qt_version }}"
-          ./init-repository.bat
-          ./configure -opensource -confirm-license -nomake tests -nomake examples `
+          $env:path += ";${{ env.RUNVCPKG_VCPKG_ROOT }}\installed\x64-windows-release\tools\protobuf"
+          aria2 https://download.qt.io/development_releases/prebuilt/libclang/qt/libclang-llvmorg-${{ env.llvm_version }}-windows-vs2022_64.7z
+          7z x libclang-llvmorg-${{ env.llvm_version }}-windows-vs2022_64.7z
+          aria2 https://download.qt.io/official_releases/qt/6.9/${{ env.qt_version }}/single/qt-everywhere-src-${{ env.qt_version }}.zip
+          7z x qt-everywhere-src-${{ env.qt_version }}.zip
+          cd qt-everywhere-src-${{ env.qt_version }}
+          ./configure FEATURE_clang=ON -opensource -confirm-license -nomake tests -nomake examples `
             -release -schannel -openssl-runtime -no-icu -skip webengine `
             -prefix "${{ env.qt_path }}" `
-            -- -DCMAKE_TOOLCHAIN_FILE="${{ env.RUNVCPKG_VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-release 
+            -- -DCMAKE_TOOLCHAIN_FILE="${{ env.RUNVCPKG_VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_PREFIX_PATH="${{ github.workspace }}/libclang"
           cmake --build . --parallel
           cmake --install .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: qt-msvc-x64
+          path: "${{ env.qt_path }}"
+     
