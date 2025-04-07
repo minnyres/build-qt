@@ -1,0 +1,56 @@
+name: Build with MSVC 
+
+on:
+  push:
+
+jobs:
+  build-qtbase:
+    name: Build
+    runs-on: windows-latest
+    env:
+      qt_path: "${{ github.workspace }}/qt-msvc-arm64"
+      qt_version: "6.9.0"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup devcmd
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Install build tools
+        run: |
+          choco install ninja
+
+      - name: Setup a new (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11 # Always specify the specific _version_ of the
+                                  # action you need, `v11` in this case to stay up
+                                  # to date with fixes on the v11 branch
+        with:
+          vcpkgGitCommitId: 'd5ec528843d29e3a52d745a64b469f810b2cedbf'
+
+      - name: Install dependencies from vcpkg
+        run: |
+          # clear buildtrees after each package installation to reduce disk space requirements
+          $packages = `
+            "openssl:x64-windows-release"
+          ${{ env.RUNVCPKG_VCPKG_ROOT }}/vcpkg.exe upgrade `
+            --no-dry-run
+          ${{ env.RUNVCPKG_VCPKG_ROOT }}/vcpkg.exe install `
+            --clean-after-build `
+            $packages
+
+      - name: Build Qt
+        run: |
+          git clone https://github.com/qt/qt5.git qt6
+          cd qt6
+          git checkout "v${{ env.qt_version }}"
+          ./init-repository.bat
+          ./configure -opensource -confirm-license -nomake tests -nomake examples `
+            -release -schannel -openssl-runtime -no-icu -skip-webengine `
+            -prefix "${{ env.qt_path }}" `
+            -- -DCMAKE_TOOLCHAIN_FILE="${{ env.RUNVCPKG_VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-release 
+          cmake --build . --parallel
+          cmake --install .
