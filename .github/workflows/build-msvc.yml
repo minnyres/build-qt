@@ -49,7 +49,7 @@ jobs:
           git checkout "v${{ env.qt_version }}"
           ./init-repository.bat
           ./configure -opensource -confirm-license -nomake tests -nomake examples `
-            -release -schannel -openssl-runtime -no-icu -skip-webengine `
+            -release -schannel -openssl-runtime -no-icu -skip webengine `
             -prefix "${{ env.qt_path }}" `
             -- -DCMAKE_TOOLCHAIN_FILE="${{ env.RUNVCPKG_VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-release 
           cmake --build . --parallel
