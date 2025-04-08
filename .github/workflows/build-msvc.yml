@@ -69,7 +69,7 @@ jobs:
   build-qtwebengine:
     name: Build
     runs-on: windows-latest
-    needs: 
+    needs: build-qtbase
     env:
       qt_path: "${{ github.workspace }}/qt-msvc-arm64"
       qt_version: "6.9.0"
@@ -93,7 +93,7 @@ jobs:
 
       - name: Build Qt Webengine
         run: |
-          $env:path+=";$pwd/gnuwin32/bin;${{ env.qt_path }}/bin"
+          $env:path += ";$pwd/gnuwin32/bin;${{ env.qt_path }}/bin"
           aria2c https://download.qt.io/development_releases/gnuwin32/gnuwin32.zip
           7z x gnuwin32.zip
           aria2c https://download.qt.io/official_releases/qt/6.9/${{ env.qt_version }}/submodules/qtwebengine-everywhere-src-${{ env.qt_version }}.zip
