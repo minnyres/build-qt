@@ -8,7 +8,7 @@ jobs:
     name: Build
     runs-on: windows-latest
     env:
-      qt_path: "${{ github.workspace }}/qt-msvc-arm64"
+      qt_path: "${{ github.workspace }}/qt-msvc-x64"
       qt_version: "6.9.0"
       llvm_version: "20.1.0"
 
@@ -57,11 +57,49 @@ jobs:
             -prefix "${{ env.qt_path }}" `
             -- -DCMAKE_TOOLCHAIN_FILE="${{ env.RUNVCPKG_VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_PREFIX_PATH="${{ github.workspace }}/libclang"
           cmake --build . --parallel
-          cmake --install .
+          cmake --install . --strip
+          mv ${{ env.RUNVCPKG_VCPKG_ROOT }}/installed/x64-windows-release ${{ env.qt_path }}/third_party_libraries
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: qt-msvc-x64
           path: "${{ env.qt_path }}"
-     
+
+  build-qtwebengine:
+    name: Build
+    runs-on: windows-latest
+    needs: 
+    env:
+      qt_path: "${{ github.workspace }}/qt-msvc-arm64"
+      qt_version: "6.9.0"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup devcmd
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Download temp artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Install build tools
+        run: |
+          choco install ninja
+          pip install html5lib 
+
+      - name: Build Qt Webengine
+        run: |
+          $env:path+=";$pwd/gnuwin32/bin;${{ env.qt_path }}/bin"
+          aria2c https://download.qt.io/development_releases/gnuwin32/gnuwin32.zip
+          7z x gnuwin32.zip
+          aria2c https://download.qt.io/official_releases/qt/6.9/${{ env.qt_version }}/submodules/qtwebengine-everywhere-src-${{ env.qt_version }}.zip
+          7z x qtwebengine-everywhere-src-${{ env.qt_version }}.zip
+          mkdir d:/build
+          cd d:/build
+          cmake -DCMAKE_INSTALL_PREFIX="${{ env.qt_path }}" -DCMAKE_BUILD_TYPE=Release ${{ github.workspace }}/qtwebengine-everywhere-src-${{ env.qt_version }}
+          cmake --build . --parallel
+          cmake --install . --strip
