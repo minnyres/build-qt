@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-qtbase:
-    name: Build
+    name: Build Qt 
     runs-on: windows-latest
     env:
       qt_path: "${{ github.workspace }}/qt-msvc-x64"
@@ -67,11 +67,11 @@ jobs:
           path: "${{ env.qt_path }}"
 
   build-qtwebengine:
-    name: Build
+    name: Build Qt WebEngine
     runs-on: windows-latest
     needs: build-qtbase
     env:
-      qt_path: "${{ github.workspace }}/qt-msvc-arm64"
+      qt_path: "${{ github.workspace }}/qt-msvc-x64"
       qt_version: "6.9.0"
 
     steps:
@@ -91,9 +91,11 @@ jobs:
           choco install ninja
           pip install html5lib 
 
-      - name: Build Qt Webengine
+      - name: Build Qt WebEngine
         run: |
           $env:path += ";$pwd/gnuwin32/bin;${{ env.qt_path }}/bin"
+          ls "${{ env.qt_path }}/bin"
+          where.exe qmake
           aria2c https://download.qt.io/development_releases/gnuwin32/gnuwin32.zip
           7z x gnuwin32.zip
           aria2c https://download.qt.io/official_releases/qt/6.9/${{ env.qt_version }}/submodules/qtwebengine-everywhere-src-${{ env.qt_version }}.zip
