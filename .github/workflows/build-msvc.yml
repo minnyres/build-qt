@@ -64,6 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: qt-msvc-x64
+          include-hidden-files: true
           path: "${{ env.qt_path }}"
 
   build-qtwebengine:
@@ -94,8 +95,6 @@ jobs:
       - name: Build Qt WebEngine
         run: |
           $env:path += ";$pwd/gnuwin32/bin;${{ env.qt_path }}/bin"
-          ls "${{ env.qt_path }}/bin"
-          where.exe qmake
           aria2c https://download.qt.io/development_releases/gnuwin32/gnuwin32.zip
           7z x gnuwin32.zip
           aria2c https://download.qt.io/official_releases/qt/6.9/${{ env.qt_version }}/submodules/qtwebengine-everywhere-src-${{ env.qt_version }}.zip
