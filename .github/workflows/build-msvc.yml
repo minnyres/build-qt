@@ -52,8 +52,10 @@ jobs:
           aria2c https://download.qt.io/official_releases/qt/6.9/${{ env.qt_version }}/single/qt-everywhere-src-${{ env.qt_version }}.zip
           7z x qt-everywhere-src-${{ env.qt_version }}.zip
           cd qt-everywhere-src-${{ env.qt_version }}
+          rm -r -fo qtwebengine
+          rm -r -fo qtwebview
           ./configure FEATURE_clang=ON -opensource -confirm-license -nomake tests -nomake examples `
-            -release -schannel -openssl-runtime -no-icu -skip webengine `
+            -release -schannel -openssl-runtime -no-icu `
             -prefix "${{ env.qt_path }}" `
             -- -DCMAKE_TOOLCHAIN_FILE="${{ env.RUNVCPKG_VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_PREFIX_PATH="${{ github.workspace }}/libclang"
           cmake --build . --parallel
@@ -105,6 +107,6 @@ jobs:
           7z x qtwebengine-everywhere-src-${{ env.qt_version }}.zip
           mkdir d:/build
           cd d:/build
-          cmake -DCMAKE_INSTALL_PREFIX="${{ env.qt_path }}" -DCMAKE_BUILD_TYPE=Release ${{ github.workspace }}/qtwebengine-everywhere-src-${{ env.qt_version }}
+          cmake -G "Ninja" -DCMAKE_INSTALL_PREFIX="${{ env.qt_path }}" -DCMAKE_BUILD_TYPE=Release ${{ github.workspace }}/qtwebengine-everywhere-src-${{ env.qt_version }}
           cmake --build . --parallel
           cmake --install . --strip
