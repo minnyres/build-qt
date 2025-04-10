@@ -90,7 +90,11 @@ jobs:
       - name: Install build tools
         run: |
           choco install ninja
-          pip install html5lib 
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install html5lib
 
       - name: Build Qt WebEngine
         run: |
