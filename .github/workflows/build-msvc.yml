@@ -49,9 +49,10 @@ jobs:
           $env:path += ";${{ env.RUNVCPKG_VCPKG_ROOT }}\installed\x64-windows-release\tools\protobuf"
           aria2c https://download.qt.io/development_releases/prebuilt/libclang/qt/libclang-llvmorg-${{ env.llvm_version }}-windows-vs2022_64.7z
           7z x libclang-llvmorg-${{ env.llvm_version }}-windows-vs2022_64.7z
-          aria2c https://download.qt.io/official_releases/qt/6.9/${{ env.qt_version }}/single/qt-everywhere-src-${{ env.qt_version }}.zip
-          7z x qt-everywhere-src-${{ env.qt_version }}.zip
-          cd qt-everywhere-src-${{ env.qt_version }}
+          git clone https://github.com/qt/qt5.git qt6
+          cd qt6
+          git checkout "v${{ env.qt_version }}"
+          ./init-repository.bat  --module-subset=qt3d,qt5compat,qtactiveqt,qtbase,qtcanvas3d,qtcharts,qtcoap,qtconnectivity,qtdatavis3d,qtdeclarative,qtdoc,qtfeedback,qtgamepad,qtgraphs,qtgrpc,qthttpserver,qtimageformats,qtlanguageserver,qtlocation,qtlottie,qtmqtt,qtmultimedia,qtnetworkauth,qtopcua,qtpim,qtpositioning,qtqa,qtquick3d,qtquick3dphysics,qtquickeffectmaker,qtquicktimeline,qtremoteobjects,qtrepotools,qtscxml,qtsensors,qtserialbus,qtserialport,qtshadertools,qtspeech,qtsvg,qtsystems,qttools,qttranslations,qtvirtualkeyboard,qtwayland,qtwebchannel,qtwebglplugin,qtwebsockets,qtxmlpatterns
           ./configure FEATURE_clang=ON -opensource -confirm-license -nomake tests -nomake examples `
             -release -schannel -openssl-runtime -no-icu -skip webengine `
             -prefix "${{ env.qt_path }}" `
@@ -90,7 +91,11 @@ jobs:
       - name: Install build tools
         run: |
           choco install ninja
-          pip install html5lib 
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install html5lib
 
       - name: Build Qt WebEngine
         run: |
